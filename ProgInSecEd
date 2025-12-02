@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Programming in Secondary Education Report Quiz</title>
+    <style>
+        :root {
+            --primary: #008080; /* Teal from report cover */
+            --secondary: #2c3e50;
+            --accent: #8e44ad; /* Purple from report cover */
+            --light: #f4f6f8;
+            --success: #27ae60;
+            --error: #c0392b;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--light);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            color: var(--secondary);
+        }
+
+        .quiz-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 700px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .header {
+            background: var(--secondary);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 1.5rem;
+        }
+
+        .stats-bar {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 20px;
+            background: #e9ecef;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .stat-box span {
+            color: var(--primary);
+        }
+
+        .question-area {
+            padding: 30px;
+        }
+
+        .question-text {
+            font-size: 1.2rem;
+            margin-bottom: 25px;
+            line-height: 1.5;
+        }
+
+        .options-grid {
+            display: grid;
+            gap: 12px;
+        }
+
+        .option-btn {
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            text-align: left;
+            font-size: 1rem;
+            transition: all 0.2s;
+            color: var(--secondary);
+        }
+
+        .option-btn:hover:not(:disabled) {
+            border-color: var(--primary);
+            background-color: #f0fafa;
+        }
+
+        .option-btn:disabled {
+            cursor: default;
+            opacity: 0.7;
+        }
+
+        .correct {
+            background-color: #d4edda !important;
+            border-color: var(--success) !important;
+            color: var(--success) !important;
+        }
+
+        .incorrect {
+            background-color: #f8d7da !important;
+            border-color: var(--error) !important;
+            color: var(--error) !important;
+        }
+
+        .controls {
+            padding: 20px;
+            text-align: right;
+            border-top: 1px solid #eee;
+        }
+
+        #next-btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 6px;
+            font-size: 1rem;
+            cursor: pointer;
+            display: none; /* Hidden until answer is selected */
+        }
+
+        #next-btn:hover {
+            background-color: #006666;
+        }
+
+        /* Results Screen */
+        .results-view {
+            text-align: center;
+            padding: 40px;
+            display: none;
+        }
+
+        .score-circle {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin: 0 auto 20px;
+        }
+
+        .citation {
+            font-size: 0.8rem;
+            color: #7f8c8d;
+            margin-top: 10px;
+            font-style: italic;
+            display: none; /* Shown after answer */
+        }
+    </style>
+</head>
+<body>
+
+<div class="quiz-container">
+    <div class="header">
+        <h1>Secondary Education Programming Report</h1>
+    </div>
+
+    <div class="stats-bar" id="stats-bar">
+        <div class="stat-box">Question: <span id="q-number">1</span>/10</div>
+        <div class="stat-box">Correct: <span id="score-correct" style="color:var(--success)">0</span></div>
+        <div class="stat-box">Incorrect: <span id="score-incorrect" style="color:var(--error)">0</span></div>
+    </div>
+
+    <div id="quiz-view">
+        <div class="question-area">
+            <div class="question-text" id="question-text">
+                </div>
+            <div class="options-grid" id="options-container">
+                </div>
+            <div class="citation" id="citation-text"></div>
+        </div>
+        <div class="controls">
+            <button id="next-btn" onclick="nextQuestion()">Next Question</button>
+        </div>
+    </div>
+
+    <div id="results-view" class="results-view">
+        <h2>Quiz Complete!</h2>
+        <div class="score-circle">
+            <span id="final-percent">0%</span>
+        </div>
+        <p id="final-message"></p>
+        <button id="next-btn" style="display:inline-block;" onclick="location.reload()">Restart Quiz</button>
+    </div>
+</div>
+
+<script>
+    // Questions derived from the provided technical report
+    const quizData = [
+        {
+            question: "According to the survey, which programming language dominates Key Stage 3 (KS3) and Key Stage 4 (KS4) with over 90% usage?",
+            options: [
+                "Java",
+                "Python",
+                "C#",
+                "Scratch"
+            ],
+            correct: 1, // Index of correct answer
+            cite: "Source: Page 3, Key Findings"
+        },
+        {
+            question: "Which pedagogical technique was identified as the 'most popular' approach, used 'often' by 41.7% of teachers?",
+            options: [
+                "Pair Programming",
+                "Parson's Problems",
+                "PRIMM (Predict, Run, Investigate, Modify, Make)",
+                "Unplugged Computing"
+            ],
+            correct: 2,
+            cite: "Source: Page 3 & Page 15"
+        },
+        {
+            question: "What is the most significant difference between State and Independent schools regarding lesson time at KS3?",
+            options: [
+                "State schools mostly spend 0-25% of time programming; Independent schools mostly spend 26-50%.",
+                "Independent schools mostly spend 0-25% of time programming; State schools mostly spend 26-50%.",
+                "State schools spend over 75% of lesson time on programming.",
+                "There is no statistical difference between the two."
+            ],
+            correct: 0,
+            cite: "Source: Page 3 & Page 11"
+        },
+        {
+            question: "Which language sees the biggest increase in usage at KS5 (A-Level), rising to over 52.5% due to its use in Non-Examined Assessments?",
+            options: [
+                "C#",
+                "Visual Basic",
+                "JavaScript",
+                "Pascal"
+            ],
+            correct: 2,
+            cite: "Source: Page 9"
+        },
+        {
+            question: "What percentage of teachers reported having taught a student who was a better programmer than themselves?",
+            options: [
+                "41%",
+                "59%",
+                "72%",
+                "81%"
+            ],
+            correct: 3,
+            cite: "Source: Page 18"
+        },
+        {
+            question: "Regarding extra-curricular competitions, which area are State-maintained schools more likely to enter compared to Independent schools?",
+            options: [
+                "Robotics",
+                "Programming & Algorithms",
+                "Game Design and Animation",
+                "Cyber Security"
+            ],
+            correct: 2,
+            cite: "Source: Page 3 & Page 24"
+        },
+        {
+            question: "Why does the use of block-based languages (like Scratch) drop to less than 3% at KS4?",
+            options: [
+                "Students refuse to use them after age 14.",
+                "They are not computationally powerful enough for GCSE projects.",
+                "Current GCSE Computer Science exam specifications do not accept them for assessment.",
+                "Teachers lack the training to teach them at an advanced level."
+            ],
+            correct: 2,
+            cite: "Source: Page 9"
+        },
+        {
+            question: "The report found a gender difference in teaching methods. Which technique are female teachers more likely to use 'often' compared to male teachers?",
+            options: [
+                "Parson's Problems",
+                "PRIMM",
+                "Live Coding",
+                "Hardware tinkering"
+            ],
+            correct: 1,
+            cite: "Source: Page 3 & Page 17"
+        },
+        {
+            question: "If GCSE exams were to move to 'on-screen' assessment, how did the majority (61.1%) of teachers say this would affect their lesson planning?",
+            options: [
+                "They would significantly increase programming time.",
+                "They would slightly decrease programming time.",
+                "They would not change the amount of time dedicated to programming.",
+                "They would switch languages immediately."
+            ],
+            correct: 2,
+            cite: "Source: Page 14"
+        },
+        {
+            question: "According to teachers, what is the approximate gender split of the 'best programmers' they currently teach?",
+            options: [
+                "50% Male / 50% Female",
+                "76% Male / 23% Female",
+                "90% Male / 10% Female",
+                "60% Male / 40% Female"
+            ],
+            correct: 1,
+            cite: "Source: Page 19"
+        }
+    ];
+
+    let currentQuestionIndex = 0;
+    let scoreCorrect = 0;
+    let scoreIncorrect = 0;
+
+    // DOM Elements
+    const qText = document.getElementById('question-text');
+    const optionsContainer = document.getElementById('options-container');
+    const nextBtn = document.getElementById('next-btn');
+    const qNumDisplay = document.getElementById('q-number');
+    const correctDisplay = document.getElementById('score-correct');
+    const incorrectDisplay = document.getElementById('score-incorrect');
+    const quizView = document.getElementById('quiz-view');
+    const resultsView = document.getElementById('results-view');
+    const citationText = document.getElementById('citation-text');
+
+    function loadQuestion() {
+        const data = quizData[currentQuestionIndex];
+        qText.innerText = data.question;
+        qNumDisplay.innerText = currentQuestionIndex + 1;
+        citationText.style.display = 'none';
+        citationText.innerText = data.cite;
+
+        // Clear previous options
+        optionsContainer.innerHTML = '';
+
+        // Generate options
+        data.options.forEach((opt, index) => {
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.innerText = opt;
+            btn.onclick = () => checkAnswer(index, btn);
+            optionsContainer.appendChild(btn);
+        });
+
+        nextBtn.style.display = 'none';
+    }
+
+    function checkAnswer(selectedIndex, btnElement) {
+        const data = quizData[currentQuestionIndex];
+        const buttons = optionsContainer.querySelectorAll('.option-btn');
+
+        // Disable all buttons to prevent changing answer
+        buttons.forEach(b => b.disabled = true);
+
+        if (selectedIndex === data.correct) {
+            // Correct Answer
+            btnElement.classList.add('correct');
+            scoreCorrect++;
+            correctDisplay.innerText = scoreCorrect;
+        } else {
+            // Incorrect Answer
+            btnElement.classList.add('incorrect');
+            // Highlight the correct one
+            buttons[data.correct].classList.add('correct');
+            scoreIncorrect++;
+            incorrectDisplay.innerText = scoreIncorrect;
+        }
+
+        // Show citation and Next button
+        citationText.style.display = 'block';
+        nextBtn.style.display = 'inline-block';
+        
+        // Change button text if it's the last question
+        if (currentQuestionIndex === quizData.length - 1) {
+            nextBtn.innerText = "Finish Quiz";
+        }
+    }
+
+    function nextQuestion() {
+        currentQuestionIndex++;
+        if (currentQuestionIndex < quizData.length) {
+            loadQuestion();
+        } else {
+            showResults();
+        }
+    }
+
+    function showResults() {
+        quizView.style.display = 'none';
+        document.getElementById('stats-bar').style.display = 'none';
+        resultsView.style.display = 'block';
+
+        const total = quizData.length;
+        const percentage = Math.round((scoreCorrect / total) * 100);
+        
+        document.getElementById('final-percent').innerText = percentage + '%';
+        
+        let message = "";
+        if (percentage >= 80) message = "Excellent work! You know the report well.";
+        else if (percentage >= 50) message = "Good job. You grasped the key concepts.";
+        else message = "Thanks for playing. Review the report to improve your score!";
+        
+        document.getElementById('final-message').innerText = message;
+    }
+
+    // Initialize
+    loadQuestion();
+
+</script>
+
+</body>
+</html>
